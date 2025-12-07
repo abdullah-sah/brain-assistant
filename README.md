@@ -75,9 +75,16 @@ Once this works for meetings, the same extraction logic applies to emails and me
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-publishable-key-here
    OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+
+   # Personal identifiers for task extraction (optional but recommended)
+   USER_NAME=Your Full Name
+   USER_IDENTIFIERS=Your Full Name,username,nickname,other-names
    ```
 
-   Note: Get your OpenAI API key from [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   Notes:
+   - Get your OpenAI API key from [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - `USER_NAME` and `USER_IDENTIFIERS` help Brain extract only YOUR commitments from meeting transcripts (not everyone's)
+   - List all variations of your name separated by commas in `USER_IDENTIFIERS`
 
 ### 4. Create Database Tables
 

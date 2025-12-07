@@ -22,19 +22,51 @@ export type ExtractedTask = z.infer<typeof taskSchema>;
  * @returns Array of extracted tasks with title, description, and raw due date
  */
 export async function extractTasks(rawText: string): Promise<ExtractedTask[]> {
+	// Get user name and identifiers from environment variables
+	const userName = process.env.USER_NAME || 'the user';
+	const userIdentifiers = process.env.USER_IDENTIFIERS
+		? process.env.USER_IDENTIFIERS.split(',').map((id) => id.trim())
+		: [];
+
+	// Build the identity section of the prompt
+	const identitySection =
+		userIdentifiers.length > 0
+			? `**User Identity:**
+${userName} may be referred to as:
+${userIdentifiers.map((id) => `- ${id}`).join('\n')}
+- "I" or "I'll" when spoken by ${userName} in a transcript`
+			: `**User Identity:**
+The user may be referred to as "I" or "I'll" in first-person transcripts`;
+
 	try {
 		const { object } = await generateObject({
 			model: openai('gpt-4o-mini'),
 			schema: tasksResponseSchema,
-			prompt: `You are a task extraction assistant. Analyse the following text and extract all actionable tasks with their due dates (if mentioned).
+			prompt: `You are a personal task extraction assistant${userName !== 'the user' ? ` for ${userName}` : ''}.
 
-Rules:
-- Only extract clear, actionable tasks (things to do, not just statements or thoughts)
-- For each task, provide a concise title
+Your job is to extract ONLY the tasks and commitments that ${userName} personally agrees to do. Do NOT extract tasks for other people.
+
+${identitySection}
+
+**What to extract:**
+- Tasks where ${userName} explicitly commits to doing something
+- Look for phrases like: "I will", "I'll", "Let me", "I can", "I'll handle", "I'll take care of", "I need to"
+- Action items explicitly assigned to ${userName}
+- Follow-up items ${userName} agrees to do
+
+**What NOT to extract:**
+- Tasks assigned to other people
+- General team goals or discussions unless ${userName} specifically commits
+- Questions or suggestions that aren't commitments
+- Tasks where ${userName} is just mentioned but doesn't commit
+
+**Task Details:**
+- Provide a concise, actionable title from ${userName}'s perspective (e.g., "Send report to Sarah", not "Sarah needs report")
 - Add a description only if there's additional context worth capturing
 - Extract due dates in their original format (e.g., "tomorrow", "next Friday", "15th December", "2025-12-15")
-- If no due date is mentioned for a task, set due_date_raw to null
-- If the text contains no actionable tasks, return an empty array
+- If no due date is mentioned, set due_date_raw to null
+
+**If the text contains no commitments from ${userName}, return an empty array.**
 
 Text to analyse:
 ${rawText}`,
