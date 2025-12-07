@@ -9,6 +9,15 @@ export async function POST(request: Request) {
 		const cookieStore = cookies();
 		const supabase = createClient(cookieStore);
 
+		// Get authenticated user
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		}
+
 		// Parse request body
 		const body = await request.json();
 		const { raw_text, source = 'other' } = body;
@@ -33,7 +42,7 @@ export async function POST(request: Request) {
 		// Insert note into notes table
 		const { data: note, error: noteError } = await supabase
 			.from('notes')
-			.insert({ raw_text: raw_text.trim() })
+			.insert({ raw_text: raw_text.trim(), user_id: user.id })
 			.select()
 			.single();
 
@@ -60,6 +69,7 @@ export async function POST(request: Request) {
 				due_date: formattedDate,
 				status: 'todo',
 				source: source,
+				user_id: user.id,
 			};
 		});
 

@@ -7,7 +7,17 @@ export async function GET() {
 		const cookieStore = cookies();
 		const supabase = createClient(cookieStore);
 
-		// Fetch all tasks, ordered by due_date (nulls last), then by created_at
+		// Get authenticated user
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		}
+
+		// Fetch all tasks for the current user (RLS will automatically filter by user_id)
+		// Ordered by due_date (nulls last), then by created_at
 		const { data: tasks, error } = await supabase
 			.from('tasks')
 			.select('*')
@@ -58,6 +68,15 @@ export async function PATCH(request: Request) {
 		const cookieStore = cookies();
 		const supabase = createClient(cookieStore);
 
+		// Get authenticated user
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		}
+
 		const body = await request.json();
 		const { id, completed } = body;
 
@@ -68,7 +87,7 @@ export async function PATCH(request: Request) {
 			);
 		}
 
-		// Update task status
+		// Update task status (RLS will automatically verify user owns this task)
 		const { data: task, error } = await supabase
 			.from('tasks')
 			.update({ status: completed ? 'completed' : 'todo' })
