@@ -19,6 +19,7 @@ export default function Home() {
 	const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [currentView, setCurrentView] = useState<'active' | 'completed'>('active');
 
 	// Fetch tasks on mount
 	const fetchTasks = async () => {
@@ -145,6 +146,11 @@ export default function Home() {
 		return colors[source];
 	};
 
+	// Filter tasks based on current view
+	const activeTasks = tasks.filter((task) => !task.completed);
+	const completedTasks = tasks.filter((task) => task.completed);
+	const displayedTasks = currentView === 'active' ? activeTasks : completedTasks;
+
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] text-[#fafafa]">
 			<div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
@@ -224,13 +230,38 @@ export default function Home() {
 				{/* Task List Section */}
 				{loading ? (
 					<div className="text-center text-[#737373]">Loading tasks...</div>
-				) : tasks.length > 0 ? (
+				) : (
 					<section>
-						<h2 className="mb-4 text-[14px] font-medium uppercase tracking-wide text-[#737373]">
-							Commitments
-						</h2>
-						<div className="space-y-2">
-							{tasks.map((task) => (
+						{/* Segment Control */}
+						<div className="mb-6">
+							<div className="flex items-center gap-1 rounded-lg border border-[#262626] bg-[#0a0a0a] p-1">
+								<button
+									onClick={() => setCurrentView('active')}
+									className={`rounded-md px-4 py-2 text-[13px] font-medium tracking-wide transition-colors duration-150 ${
+										currentView === 'active'
+											? 'bg-[#151515] text-white'
+											: 'bg-transparent text-[#737373] hover:bg-[#111111] hover:text-[#a3a3a3]'
+									}`}
+								>
+									Active {activeTasks.length > 0 && `(${activeTasks.length})`}
+								</button>
+								<button
+									onClick={() => setCurrentView('completed')}
+									className={`rounded-md px-4 py-2 text-[13px] font-medium tracking-wide transition-colors duration-150 ${
+										currentView === 'completed'
+											? 'bg-[#151515] text-white'
+											: 'bg-transparent text-[#737373] hover:bg-[#111111] hover:text-[#a3a3a3]'
+									}`}
+								>
+									Completed {completedTasks.length > 0 && `(${completedTasks.length})`}
+								</button>
+							</div>
+						</div>
+
+						{/* Task List */}
+						{displayedTasks.length > 0 ? (
+							<div className="space-y-2">
+								{displayedTasks.map((task) => (
 								<div
 									key={task.id}
 									className={`group rounded-lg border bg-[#151515] p-4 transition-colors hover:bg-[#1f1f1f] ${
@@ -303,15 +334,28 @@ export default function Home() {
 									</div>
 								</div>
 							))}
-						</div>
+							</div>
+						) : (
+							/* Empty State */
+							<div className="flex flex-col items-center justify-center px-4 py-16">
+								<div className="space-y-2 text-center text-sm text-[#404040]">
+									{currentView === 'active' ? (
+										<>
+											<p className="font-medium">No active commitments</p>
+											<p className="text-xs text-[#2e2e2e]">
+												Tasks appear here when created or restored
+											</p>
+										</>
+									) : (
+										<>
+											<p className="font-medium">No completed tasks yet</p>
+											<p className="text-xs text-[#2e2e2e]">Completed tasks will appear here</p>
+										</>
+									)}
+								</div>
+							</div>
+						)}
 					</section>
-				) : (
-					/* Empty State */
-					<div className="rounded-lg border border-dashed border-[#333333] bg-[#151515] px-6 py-12 text-center">
-						<p className="text-[15px] text-[#737373]">
-							No commitments yet. Paste a transcript above to get started.
-						</p>
-					</div>
 				)}
 			</div>
 		</div>
