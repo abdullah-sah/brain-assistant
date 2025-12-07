@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createClient } from '@/app/utils/supabase/client';
 
 interface Task {
 	id: string;
@@ -151,17 +152,34 @@ export default function Home() {
 	const completedTasks = tasks.filter((task) => task.completed);
 	const displayedTasks = currentView === 'active' ? activeTasks : completedTasks;
 
+	// Logout handler
+	const handleLogout = async () => {
+		const supabase = createClient();
+		await supabase.auth.signOut();
+		window.location.href = '/login';
+	};
+
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] text-[#fafafa]">
 			<div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
 				{/* Header */}
 				<header className="mb-8">
-					<h1 className="text-[32px] font-semibold leading-tight tracking-tight">
-						Brain Assistant
-					</h1>
-					<p className="mt-2 text-[15px] leading-relaxed text-[#a1a1a1]">
-						A memory prosthetic for commitments made in conversation.
-					</p>
+					<div className="flex items-start justify-between">
+						<div>
+							<h1 className="text-[32px] font-semibold leading-tight tracking-tight">
+								Brain Assistant
+							</h1>
+							<p className="mt-2 text-[15px] leading-relaxed text-[#a1a1a1]">
+								A memory prosthetic for commitments made in conversation.
+							</p>
+						</div>
+						<button
+							onClick={handleLogout}
+							className="rounded-lg border border-[#333333] bg-[#151515] px-3 py-2 text-[13px] font-medium text-[#a1a1a1] transition-colors hover:border-[#404040] hover:text-[#fafafa]"
+						>
+							Logout
+						</button>
+					</div>
 				</header>
 
 				{/* Input Section */}
