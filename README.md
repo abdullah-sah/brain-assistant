@@ -4,6 +4,8 @@
 
 Brain solves a simple problem: things people say to you in meetings, emails, and messages contain commitments you make, and those commitments evaporate unless you manually capture them. Brain intercepts those sources and extracts actionable items before they disappear.
 
+🌐 **Live at:** [brain-assistant.vercel.app](https://brain-assistant.vercel.app)
+
 ## Vision
 
 Build a personal assistant that prevents you from:
