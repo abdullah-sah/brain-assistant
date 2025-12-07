@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Task {
 	id: string;
@@ -16,31 +16,42 @@ export default function Home() {
 	const [transcript, setTranscript] = useState('');
 	const [processing, setProcessing] = useState(false);
 	const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-	const [tasks, setTasks] = useState<Task[]>([
-		// Mock data for visual reference - remove when API is connected
-		{
-			id: '1',
-			title: 'Send Q4 roadmap to Sarah',
-			description: 'Include the updated timeline we discussed',
-			due_date: '2025-12-06',
-			source: 'meeting',
-			completed: false,
-			isOverdue: true,
-		},
-		{
-			id: '2',
-			title: 'Review design mockups',
-			due_date: '2025-12-08',
-			source: 'email',
-			completed: false,
-		},
-		{
-			id: '3',
-			title: 'Book dentist appointment',
-			source: 'message',
-			completed: false,
-		},
-	]);
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	// Fetch tasks on mount
+	const fetchTasks = async () => {
+		try {
+			const response = await fetch('/api/tasks');
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || 'Failed to fetch tasks');
+			}
+
+			// Map database tasks to UI format
+			const mappedTasks = (data.tasks || []).map((task: any) => ({
+				id: task.id,
+				title: task.title,
+				description: task.description,
+				due_date: task.due_date,
+				source: task.source || 'note',
+				completed: task.status === 'completed',
+				isOverdue: task.isOverdue,
+			}));
+
+			setTasks(mappedTasks);
+		} catch (error) {
+			console.error('Error fetching tasks:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Fetch tasks on component mount
+	useEffect(() => {
+		fetchTasks();
+	}, []);
 
 	const handleProcess = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -70,7 +81,8 @@ export default function Home() {
 				text: `Successfully processed! Extracted ${data.tasks_count} task${data.tasks_count !== 1 ? 's' : ''}.`,
 			});
 			setTranscript('');
-			// When API is ready: setTasks(prev => [...prev, ...data.tasks]);
+			// Refetch tasks to show newly created ones
+			await fetchTasks();
 		} catch (error) {
 			setMessage({
 				type: 'error',
@@ -81,10 +93,32 @@ export default function Home() {
 		}
 	};
 
-	const toggleTask = (id: string) => {
+	const toggleTask = async (id: string) => {
+		const task = tasks.find((t) => t.id === id);
+		if (!task) return;
+
+		// Optimistic update
 		setTasks((prev) =>
-			prev.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
+			prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
 		);
+
+		try {
+			const response = await fetch('/api/tasks', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id, completed: !task.completed }),
+			});
+
+			if (!response.ok) {
+				// Revert optimistic update on error
+				setTasks((prev) =>
+					prev.map((t) => (t.id === id ? { ...t, completed: task.completed } : t))
+				);
+				throw new Error('Failed to update task');
+			}
+		} catch (error) {
+			console.error('Error toggling task:', error);
+		}
 	};
 
 	const formatDate = (dateString?: string) => {
@@ -164,7 +198,9 @@ export default function Home() {
 				</section>
 
 				{/* Task List Section */}
-				{tasks.length > 0 && (
+				{loading ? (
+					<div className="text-center text-[#737373]">Loading tasks...</div>
+				) : tasks.length > 0 ? (
 					<section>
 						<h2 className="mb-4 text-[14px] font-medium uppercase tracking-wide text-[#737373]">
 							Commitments
@@ -245,10 +281,8 @@ export default function Home() {
 							))}
 						</div>
 					</section>
-				)}
-
-				{/* Empty State */}
-				{tasks.length === 0 && (
+				) : (
+					/* Empty State */
 					<div className="rounded-lg border border-dashed border-[#333333] bg-[#151515] px-6 py-12 text-center">
 						<p className="text-[15px] text-[#737373]">
 							No commitments yet. Paste a transcript above to get started.
