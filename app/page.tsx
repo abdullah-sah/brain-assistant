@@ -1,23 +1,261 @@
-import Image from 'next/image';
+'use client';
+
+import { useState } from 'react';
+
+interface Task {
+	id: string;
+	title: string;
+	description?: string;
+	due_date?: string;
+	source: 'meeting' | 'email' | 'message' | 'note';
+	completed: boolean;
+	isOverdue?: boolean;
+}
 
 export default function Home() {
+	const [transcript, setTranscript] = useState('');
+	const [processing, setProcessing] = useState(false);
+	const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+	const [tasks, setTasks] = useState<Task[]>([
+		// Mock data for visual reference - remove when API is connected
+		{
+			id: '1',
+			title: 'Send Q4 roadmap to Sarah',
+			description: 'Include the updated timeline we discussed',
+			due_date: '2025-12-06',
+			source: 'meeting',
+			completed: false,
+			isOverdue: true,
+		},
+		{
+			id: '2',
+			title: 'Review design mockups',
+			due_date: '2025-12-08',
+			source: 'email',
+			completed: false,
+		},
+		{
+			id: '3',
+			title: 'Book dentist appointment',
+			source: 'message',
+			completed: false,
+		},
+	]);
+
+	const handleProcess = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!transcript.trim()) {
+			setMessage({ type: 'error', text: 'Please enter some text to process' });
+			return;
+		}
+
+		setProcessing(true);
+		setMessage(null);
+
+		try {
+			const response = await fetch('/api/process', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ raw_text: transcript }),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || 'Failed to process text');
+			}
+
+			setMessage({
+				type: 'success',
+				text: `Successfully processed! Extracted ${data.tasks_count} task${data.tasks_count !== 1 ? 's' : ''}.`,
+			});
+			setTranscript('');
+			// When API is ready: setTasks(prev => [...prev, ...data.tasks]);
+		} catch (error) {
+			setMessage({
+				type: 'error',
+				text: error instanceof Error ? error.message : 'An unexpected error occurred',
+			});
+		} finally {
+			setProcessing(false);
+		}
+	};
+
+	const toggleTask = (id: string) => {
+		setTasks((prev) =>
+			prev.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
+		);
+	};
+
+	const formatDate = (dateString?: string) => {
+		if (!dateString) return null;
+		const date = new Date(dateString);
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+
+		if (date.toDateString() === today.toDateString()) return 'Today';
+		if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+
+		return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+	};
+
+	const getSourceColor = (source: Task['source']) => {
+		const colors = {
+			meeting: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+			email: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+			message: 'bg-green-500/10 text-green-400 border-green-500/20',
+			note: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
+		};
+		return colors[source];
+	};
+
 	return (
-		<div className='flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black'>
-			<main className='flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start'>
-				<Image
-					className='dark:invert'
-					src='/next.svg'
-					alt='Next.js logo'
-					width={100}
-					height={20}
-					priority
-				/>
-				<div className='flex flex-col items-center gap-6 text-center sm:items-start sm:text-left'>
-					<h1 className='max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50'>
-						To get started, edit the page.tsx file.
+		<div className="min-h-screen bg-[#0a0a0a] text-[#fafafa]">
+			<div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
+				{/* Header */}
+				<header className="mb-8">
+					<h1 className="text-[32px] font-semibold leading-tight tracking-tight">
+						Brain Assistant
 					</h1>
-				</div>
-			</main>
+					<p className="mt-2 text-[15px] leading-relaxed text-[#a1a1a1]">
+						A memory prosthetic for commitments made in conversation.
+					</p>
+				</header>
+
+				{/* Input Section */}
+				<section className="mb-12">
+					<form onSubmit={handleProcess} className="space-y-4">
+						<div>
+							<label htmlFor="transcript" className="sr-only">
+								Paste meeting transcript, email, or message
+							</label>
+							<textarea
+								id="transcript"
+								value={transcript}
+								onChange={(e) => setTranscript(e.target.value)}
+								placeholder="Paste meeting transcript, email, or message..."
+								rows={8}
+								className="w-full resize-none rounded-lg border border-[#333333] bg-[#151515] px-4 py-3 text-[15px] leading-relaxed text-[#fafafa] placeholder-[#737373] transition-colors focus:border-[#404040] focus:outline-none focus:ring-2 focus:ring-white/10"
+							/>
+						</div>
+
+						<button
+							type="submit"
+							disabled={processing || !transcript.trim()}
+							className="w-full rounded-lg bg-white px-4 py-2.5 text-[15px] font-medium text-black transition-colors hover:bg-[#e5e5e5] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-6"
+						>
+							{processing ? 'Processing...' : 'Process'}
+						</button>
+
+						{/* Feedback Messages */}
+						{message && (
+							<div
+								className={`rounded-lg border px-4 py-3 text-[13px] ${
+									message.type === 'success'
+										? 'border-[#15803d] bg-[#14532d] text-[#86efac]'
+										: 'border-[#991b1b] bg-[#450a0a] text-[#fca5a5]'
+								}`}
+							>
+								{message.text}
+							</div>
+						)}
+					</form>
+				</section>
+
+				{/* Task List Section */}
+				{tasks.length > 0 && (
+					<section>
+						<h2 className="mb-4 text-[14px] font-medium uppercase tracking-wide text-[#737373]">
+							Commitments
+						</h2>
+						<div className="space-y-2">
+							{tasks.map((task) => (
+								<div
+									key={task.id}
+									className={`group rounded-lg border bg-[#151515] p-4 transition-colors hover:bg-[#1f1f1f] ${
+										task.isOverdue ? 'border-[#dc2626]/30' : 'border-[#262626]'
+									}`}
+								>
+									<div className="flex items-start gap-3">
+										<button
+											onClick={() => toggleTask(task.id)}
+											className={`mt-0.5 h-5 w-5 flex-shrink-0 rounded border-2 transition-colors ${
+												task.completed
+													? 'border-[#16a34a] bg-[#16a34a]'
+													: 'border-[#404040] hover:border-[#525252]'
+											}`}
+											aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
+										>
+											{task.completed && (
+												<svg
+													className="h-full w-full text-black"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													strokeWidth={3}
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														d="M5 13l4 4L19 7"
+													/>
+												</svg>
+											)}
+										</button>
+
+										<div className="min-w-0 flex-1">
+											<div className="flex items-start justify-between gap-3">
+												<h3
+													className={`text-[15px] leading-relaxed ${
+														task.completed ? 'text-[#737373] line-through' : 'text-[#fafafa]'
+													}`}
+												>
+													{task.title}
+												</h3>
+												{task.due_date && (
+													<span
+														className={`flex-shrink-0 text-[13px] ${
+															task.isOverdue ? 'font-medium text-[#dc2626]' : 'text-[#a1a1a1]'
+														}`}
+													>
+														{formatDate(task.due_date)}
+													</span>
+												)}
+											</div>
+
+											{task.description && (
+												<p className="mt-1 text-[13px] leading-relaxed text-[#a1a1a1]">
+													{task.description}
+												</p>
+											)}
+
+											<div className="mt-2">
+												<span
+													className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${getSourceColor(
+														task.source
+													)}`}
+												>
+													{task.source}
+												</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</section>
+				)}
+
+				{/* Empty State */}
+				{tasks.length === 0 && (
+					<div className="rounded-lg border border-dashed border-[#333333] bg-[#151515] px-6 py-12 text-center">
+						<p className="text-[15px] text-[#737373]">
+							No commitments yet. Paste a transcript above to get started.
+						</p>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }
