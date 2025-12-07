@@ -11,12 +11,21 @@ export async function POST(request: Request) {
 
 		// Parse request body
 		const body = await request.json();
-		const { raw_text } = body;
+		const { raw_text, source = 'other' } = body;
 
 		// Validate input
 		if (!raw_text || typeof raw_text !== 'string' || raw_text.trim().length === 0) {
 			return NextResponse.json(
 				{ error: 'raw_text is required and must be a non-empty string' },
+				{ status: 400 }
+			);
+		}
+
+		// Validate source if provided
+		const validSources = ['meeting', 'email', 'message', 'note', 'other'];
+		if (source && !validSources.includes(source)) {
+			return NextResponse.json(
+				{ error: `Invalid source. Must be one of: ${validSources.join(', ')}` },
 				{ status: 400 }
 			);
 		}
@@ -50,6 +59,7 @@ export async function POST(request: Request) {
 				description: task.description,
 				due_date: formattedDate,
 				status: 'todo',
+				source: source,
 			};
 		});
 

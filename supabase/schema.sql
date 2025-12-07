@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 	description TEXT,
 	due_date DATE,
 	status TEXT DEFAULT 'todo',
+	source TEXT DEFAULT 'other',
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

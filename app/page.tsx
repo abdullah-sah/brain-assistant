@@ -14,6 +14,7 @@ interface Task {
 
 export default function Home() {
 	const [transcript, setTranscript] = useState('');
+	const [source, setSource] = useState<'meeting' | 'email' | 'message' | 'note'>('meeting');
 	const [processing, setProcessing] = useState(false);
 	const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 	const [tasks, setTasks] = useState<Task[]>([]);
@@ -67,7 +68,7 @@ export default function Home() {
 			const response = await fetch('/api/process', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ raw_text: transcript }),
+				body: JSON.stringify({ raw_text: transcript, source }),
 			});
 
 			const data = await response.json();
@@ -160,6 +161,29 @@ export default function Home() {
 				{/* Input Section */}
 				<section className="mb-12">
 					<form onSubmit={handleProcess} className="space-y-4">
+						{/* Source Selector */}
+						<div>
+							<label className="mb-2 block text-[13px] font-medium text-[#a1a1a1]">
+								Source Type
+							</label>
+							<div className="flex gap-2">
+								{(['meeting', 'email', 'message', 'note'] as const).map((type) => (
+									<button
+										key={type}
+										type="button"
+										onClick={() => setSource(type)}
+										className={`flex-1 rounded-lg border px-3 py-2 text-[13px] font-medium capitalize transition-colors ${
+											source === type
+												? 'border-white bg-white text-black'
+												: 'border-[#333333] bg-[#151515] text-[#a1a1a1] hover:border-[#404040] hover:text-[#fafafa]'
+										}`}
+									>
+										{type}
+									</button>
+								))}
+							</div>
+						</div>
+
 						<div>
 							<label htmlFor="transcript" className="sr-only">
 								Paste meeting transcript, email, or message
