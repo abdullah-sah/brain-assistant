@@ -21,6 +21,9 @@ export default function Home() {
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [currentView, setCurrentView] = useState<'active' | 'completed'>('active');
+	const [inputMode, setInputMode] = useState<'text' | 'upload'>('text');
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [uploadError, setUploadError] = useState<string | null>(null);
 
 	// Fetch tasks on mount
 	const fetchTasks = async () => {
@@ -58,32 +61,65 @@ export default function Home() {
 
 	const handleProcess = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!transcript.trim()) {
-			setMessage({ type: 'error', text: 'Please enter some text to process' });
-			return;
+
+		// Validation based on input mode
+		if (inputMode === 'text') {
+			if (!transcript.trim()) {
+				setMessage({ type: 'error', text: 'Please enter some text to process' });
+				return;
+			}
+		} else {
+			if (!selectedFile) {
+				setMessage({ type: 'error', text: 'Please select a file to upload' });
+				return;
+			}
 		}
 
 		setProcessing(true);
 		setMessage(null);
+		setUploadError(null);
 
 		try {
-			const response = await fetch('/api/process', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ raw_text: transcript, source }),
-			});
+			let response;
+			let data;
 
-			const data = await response.json();
+			if (inputMode === 'text') {
+				// Text processing (existing logic)
+				response = await fetch('/api/process', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ raw_text: transcript, source }),
+				});
+				data = await response.json();
+			} else {
+				// File upload processing
+				if (!selectedFile) {
+					throw new Error('No file selected');
+				}
+				const formData = new FormData();
+				formData.append('file', selectedFile);
+				formData.append('source', source);
+
+				response = await fetch('/api/upload-document', {
+					method: 'POST',
+					body: formData,
+				});
+				data = await response.json();
+			}
 
 			if (!response.ok) {
-				throw new Error(data.error || 'Failed to process text');
+				throw new Error(data.error || data.details || 'Failed to process');
 			}
 
 			setMessage({
 				type: 'success',
 				text: `Successfully processed! Extracted ${data.tasks_count} task${data.tasks_count !== 1 ? 's' : ''}.`,
 			});
+
+			// Clear inputs
 			setTranscript('');
+			setSelectedFile(null);
+
 			// Refetch tasks to show newly created ones
 			await fetchTasks();
 		} catch (error) {
@@ -208,23 +244,196 @@ export default function Home() {
 							</div>
 						</div>
 
+						{/* Input Mode Toggle */}
 						<div>
-							<label htmlFor="transcript" className="sr-only">
-								Paste meeting transcript, email, or message
+							<label className="mb-2 block text-[length:var(--font-size-sm)] font-medium text-text-secondary">
+								Input Method
 							</label>
-							<textarea
-								id="transcript"
-								value={transcript}
-								onChange={(e) => setTranscript(e.target.value)}
-								placeholder="Paste meeting transcript, email, or message..."
-								rows={8}
-								className="w-full resize-none rounded-lg border border-border-input bg-bg-secondary px-4 py-3 text-[length:var(--font-size-base)] leading-relaxed text-text-primary placeholder-text-tertiary transition-colors focus:border-border-hover focus:outline-none focus:ring-2 focus:ring-white/10"
-							/>
+							<div className="flex items-center gap-1 rounded-lg border border-border-default bg-bg-primary p-1">
+								<button
+									type="button"
+									onClick={() => setInputMode('text')}
+									className={`flex-1 rounded-md px-4 py-2 text-[length:var(--font-size-sm)] font-medium transition-colors duration-150 ${
+										inputMode === 'text'
+											? 'bg-bg-secondary text-white'
+											: 'bg-transparent text-text-tertiary hover:bg-bg-hover-subtle hover:text-text-secondary'
+									}`}
+								>
+									Paste Text
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										setInputMode('upload');
+										setTranscript('');
+										setUploadError(null);
+									}}
+									className={`flex-1 rounded-md px-4 py-2 text-[length:var(--font-size-sm)] font-medium transition-colors duration-150 ${
+										inputMode === 'upload'
+											? 'bg-bg-secondary text-white'
+											: 'bg-transparent text-text-tertiary hover:bg-bg-hover-subtle hover:text-text-secondary'
+									}`}
+								>
+									Upload Document
+								</button>
+							</div>
 						</div>
+
+						{/* Conditional Input: Textarea or File Upload */}
+						{inputMode === 'text' ? (
+							<div>
+								<label htmlFor="transcript" className="sr-only">
+									Paste meeting transcript, email, or message
+								</label>
+								<textarea
+									id="transcript"
+									value={transcript}
+									onChange={(e) => setTranscript(e.target.value)}
+									placeholder="Paste meeting transcript, email, or message..."
+									rows={8}
+									className="w-full resize-none rounded-lg border border-border-input bg-bg-secondary px-4 py-3 text-[length:var(--font-size-base)] leading-relaxed text-text-primary placeholder-text-tertiary transition-colors focus:border-border-hover focus:outline-none focus:ring-2 focus:ring-white/10"
+								/>
+							</div>
+						) : (
+							<div>
+								<label htmlFor="file-upload" className="sr-only">
+									Upload document
+								</label>
+								<div className="space-y-3">
+									<div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border-input bg-bg-secondary px-6 py-8 transition-colors hover:border-border-hover">
+										<input
+											id="file-upload"
+											type="file"
+											accept=".pdf,.docx,.txt,.md,.jpg,.jpeg,.png,.heic"
+											onChange={(e) => {
+												const file = e.target.files?.[0];
+												if (file) {
+													// Client-side validation
+													const MAX_SIZE = 200 * 1024 * 1024; // 200MB
+													if (file.size > MAX_SIZE) {
+														setUploadError(`File too large (max 200MB). Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+														setSelectedFile(null);
+														e.target.value = '';
+														return;
+													}
+
+													const allowedTypes = [
+														'application/pdf',
+														'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+														'image/jpeg',
+														'image/jpg',
+														'image/png',
+														'image/heic',
+														'text/plain',
+														'text/markdown',
+													];
+
+													if (!allowedTypes.includes(file.type)) {
+														setUploadError(`Unsupported file type. Allowed: PDF, DOCX, TXT, MD, JPG, PNG, HEIC.`);
+														setSelectedFile(null);
+														e.target.value = '';
+														return;
+													}
+
+													setSelectedFile(file);
+													setUploadError(null);
+												}
+											}}
+											className="hidden"
+										/>
+										<label
+											htmlFor="file-upload"
+											className="cursor-pointer text-center"
+										>
+											<div className="mb-2">
+												<svg
+													className="mx-auto h-12 w-12 text-text-tertiary"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+													/>
+												</svg>
+											</div>
+											<p className="text-[length:var(--font-size-base)] text-text-primary">
+												Click to upload or drag and drop
+											</p>
+											<p className="mt-1 text-[length:var(--font-size-sm)] text-text-tertiary">
+												PDF, DOCX, TXT, MD, JPG, PNG, HEIC (max 200MB)
+											</p>
+										</label>
+									</div>
+
+									{/* Selected File Preview */}
+									{selectedFile && (
+										<div className="flex items-center justify-between rounded-lg border border-border-default bg-bg-secondary px-4 py-3">
+											<div className="flex items-center gap-3">
+												<svg
+													className="h-6 w-6 text-text-secondary"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+													/>
+												</svg>
+												<div>
+													<p className="text-[length:var(--font-size-sm)] font-medium text-text-primary">
+														{selectedFile.name}
+													</p>
+													<p className="text-[length:var(--font-size-xs)] text-text-tertiary">
+														{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+													</p>
+												</div>
+											</div>
+											<button
+												type="button"
+												onClick={() => {
+													setSelectedFile(null);
+													const input = document.getElementById('file-upload') as HTMLInputElement;
+													if (input) input.value = '';
+												}}
+												className="text-text-tertiary hover:text-text-primary transition-colors"
+											>
+												<svg
+													className="h-5 w-5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M6 18L18 6M6 6l12 12"
+													/>
+												</svg>
+											</button>
+										</div>
+									)}
+
+									{/* Upload Error Display */}
+									{uploadError && (
+										<div className="rounded-lg border border-status-error-border bg-status-error-bg px-4 py-3 text-[length:var(--font-size-sm)] text-status-error-text">
+											{uploadError}
+										</div>
+									)}
+								</div>
+							</div>
+						)}
 
 						<button
 							type="submit"
-							disabled={processing || !transcript.trim()}
+							disabled={processing || (inputMode === 'text' ? !transcript.trim() : !selectedFile)}
 							className="w-full rounded-lg bg-white px-4 py-2.5 text-[length:var(--font-size-base)] font-medium text-black transition-colors hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-6"
 						>
 							{processing ? 'Processing...' : 'Process'}

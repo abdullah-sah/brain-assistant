@@ -42,3 +42,7 @@ next-env.d.ts
 
 # cursor
 .cursorrules
+
+# claude code local config
+.claude/
+.mcp.json
