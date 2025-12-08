@@ -10,6 +10,54 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Semantic Background Colors */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #151515;
+  --color-bg-tertiary: #1a1a1a;
+  --color-bg-hover: #1f1f1f;
+  --color-bg-hover-subtle: #141414;
+
+  /* Semantic Text Colors (WCAG AA compliant) */
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1a1;
+  --color-text-tertiary: #8a8a8a;
+  --color-text-muted: #6b6b6b;
+  --color-text-disabled: #5a5a5a;
+  --color-text-subtle: #525252;
+
+  /* Border Colors */
+  --color-border-default: #262626;
+  --color-border-input: #333333;
+  --color-border-hover: #404040;
+  --color-border-focus: #525252;
+
+  /* Status Colors */
+  --color-status-success-text: #86efac;
+  --color-status-success-bg: #14532d;
+  --color-status-success-border: #15803d;
+  --color-status-error-text: #fca5a5;
+  --color-status-error-bg: #450a0a;
+  --color-status-error-border: #991b1b;
+  --color-status-warning: #dc2626;
+  --color-status-completed: #16a34a;
+
+  /* Interactive Colors */
+  --color-interactive-primary-bg: #ffffff;
+  --color-interactive-primary-text: #000000;
+  --color-interactive-primary-hover: #e5e5e5;
+  --color-interactive-secondary-bg: #0a0a0a;
+  --color-interactive-secondary-text: #ffffff;
+  --color-interactive-secondary-border: #333333;
+  --color-interactive-secondary-hover-bg: #141414;
+  --color-interactive-secondary-hover-border: #404040;
+
+  /* Font Size Scale (rem-based) */
+  --font-size-xs: 0.6875rem;    /* 11px */
+  --font-size-sm: 0.8125rem;    /* 13px */
+  --font-size-base: 0.9375rem;  /* 15px */
+  --font-size-lg: 1.25rem;      /* 20px */
+  --font-size-xl: 2rem;         /* 32px */
 }
 
 @media (prefers-color-scheme: dark) {

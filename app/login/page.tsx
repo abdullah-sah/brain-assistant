@@ -19,31 +19,31 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+		<div className="flex min-h-screen items-center justify-center bg-bg-primary">
 			<div className="w-full max-w-md space-y-8 px-4">
 				{/* Header */}
 				<div className="text-center">
-					<h1 className="text-[32px] font-semibold leading-tight tracking-tight text-[#fafafa]">
+					<h1 className="text-[length:var(--font-size-xl)] font-semibold leading-tight tracking-tight text-text-primary">
 						Brain Assistant
 					</h1>
-					<p className="mt-2 text-[15px] leading-relaxed text-[#a1a1a1]">
+					<p className="mt-2 text-[length:var(--font-size-base)] leading-relaxed text-text-secondary">
 						A memory prosthetic for commitments made in conversation.
 					</p>
 				</div>
 
 				{/* Login Card */}
-				<div className="rounded-lg border border-[#262626] bg-[#151515] p-8">
+				<div className="rounded-lg border border-border-default bg-bg-secondary p-8">
 					<div className="space-y-6">
 						<div className="space-y-2 text-center">
-							<h2 className="text-[20px] font-medium text-[#fafafa]">Sign in to continue</h2>
-							<p className="text-[13px] text-[#737373]">
+							<h2 className="text-[length:var(--font-size-lg)] font-medium text-text-primary">Sign in to continue</h2>
+							<p className="text-[length:var(--font-size-sm)] text-text-tertiary">
 								Use your GitHub account to access Brain
 							</p>
 						</div>
 
 						<button
 							onClick={handleGitHubLogin}
-							className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#333333] bg-[#0a0a0a] px-4 py-3 text-[15px] font-medium text-white transition-colors hover:bg-[#111111] hover:border-[#404040]"
+							className="flex w-full items-center justify-center gap-3 rounded-lg border border-border-input bg-bg-primary px-4 py-3 text-[length:var(--font-size-base)] font-medium text-white transition-colors hover:bg-bg-hover-subtle hover:border-border-hover"
 						>
 							<svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
 								<path
@@ -55,7 +55,7 @@ export default function LoginPage() {
 							Continue with GitHub
 						</button>
 
-						<p className="text-center text-[11px] text-[#525252]">
+						<p className="text-center text-[length:var(--font-size-xs)] text-text-muted">
 							By signing in, you agree to use Brain for personal productivity.
 						</p>
 					</div>

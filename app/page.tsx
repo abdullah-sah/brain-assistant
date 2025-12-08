@@ -160,22 +160,22 @@ export default function Home() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[#0a0a0a] text-[#fafafa]">
+		<div className="min-h-screen bg-bg-primary text-text-primary">
 			<div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
 				{/* Header */}
 				<header className="mb-8">
 					<div className="flex items-start justify-between">
 						<div>
-							<h1 className="text-[32px] font-semibold leading-tight tracking-tight">
+							<h1 className="text-[length:var(--font-size-xl)] font-semibold leading-tight tracking-tight">
 								Brain Assistant
 							</h1>
-							<p className="mt-2 text-[15px] leading-relaxed text-[#a1a1a1]">
+							<p className="mt-2 text-[length:var(--font-size-base)] leading-relaxed text-text-secondary">
 								A memory prosthetic for commitments made in conversation.
 							</p>
 						</div>
 						<button
 							onClick={handleLogout}
-							className="rounded-lg border border-[#333333] bg-[#151515] px-3 py-2 text-[13px] font-medium text-[#a1a1a1] transition-colors hover:border-[#404040] hover:text-[#fafafa]"
+							className="rounded-lg border border-border-input bg-bg-secondary px-3 py-2 text-[length:var(--font-size-sm)] font-medium text-text-secondary transition-colors hover:border-border-hover hover:text-text-primary"
 						>
 							Logout
 						</button>
@@ -187,7 +187,7 @@ export default function Home() {
 					<form onSubmit={handleProcess} className="space-y-4">
 						{/* Source Selector */}
 						<div>
-							<label className="mb-2 block text-[13px] font-medium text-[#a1a1a1]">
+							<label className="mb-2 block text-[length:var(--font-size-sm)] font-medium text-text-secondary">
 								Source Type
 							</label>
 							<div className="flex gap-2">
@@ -196,10 +196,10 @@ export default function Home() {
 										key={type}
 										type="button"
 										onClick={() => setSource(type)}
-										className={`flex-1 rounded-lg border px-3 py-2 text-[13px] font-medium capitalize transition-colors ${
+										className={`flex-1 rounded-lg border px-3 py-2 text-[length:var(--font-size-sm)] font-medium capitalize transition-colors ${
 											source === type
 												? 'border-white bg-white text-black'
-												: 'border-[#333333] bg-[#151515] text-[#a1a1a1] hover:border-[#404040] hover:text-[#fafafa]'
+												: 'border-border-input bg-bg-secondary text-text-secondary hover:border-border-hover hover:text-text-primary'
 										}`}
 									>
 										{type}
@@ -218,14 +218,14 @@ export default function Home() {
 								onChange={(e) => setTranscript(e.target.value)}
 								placeholder="Paste meeting transcript, email, or message..."
 								rows={8}
-								className="w-full resize-none rounded-lg border border-[#333333] bg-[#151515] px-4 py-3 text-[15px] leading-relaxed text-[#fafafa] placeholder-[#737373] transition-colors focus:border-[#404040] focus:outline-none focus:ring-2 focus:ring-white/10"
+								className="w-full resize-none rounded-lg border border-border-input bg-bg-secondary px-4 py-3 text-[length:var(--font-size-base)] leading-relaxed text-text-primary placeholder-text-tertiary transition-colors focus:border-border-hover focus:outline-none focus:ring-2 focus:ring-white/10"
 							/>
 						</div>
 
 						<button
 							type="submit"
 							disabled={processing || !transcript.trim()}
-							className="w-full rounded-lg bg-white px-4 py-2.5 text-[15px] font-medium text-black transition-colors hover:bg-[#e5e5e5] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-6"
+							className="w-full rounded-lg bg-white px-4 py-2.5 text-[length:var(--font-size-base)] font-medium text-black transition-colors hover:bg-interactive-primary-hover disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-6"
 						>
 							{processing ? 'Processing...' : 'Process'}
 						</button>
@@ -233,10 +233,10 @@ export default function Home() {
 						{/* Feedback Messages */}
 						{message && (
 							<div
-								className={`rounded-lg border px-4 py-3 text-[13px] ${
+								className={`rounded-lg border px-4 py-3 text-[length:var(--font-size-sm)] ${
 									message.type === 'success'
-										? 'border-[#15803d] bg-[#14532d] text-[#86efac]'
-										: 'border-[#991b1b] bg-[#450a0a] text-[#fca5a5]'
+										? 'border-status-success-border bg-status-success-bg text-status-success-text'
+										: 'border-status-error-border bg-status-error-bg text-status-error-text'
 								}`}
 							>
 								{message.text}
@@ -247,28 +247,28 @@ export default function Home() {
 
 				{/* Task List Section */}
 				{loading ? (
-					<div className="text-center text-[#737373]">Loading tasks...</div>
+					<div className="text-center text-text-tertiary">Loading tasks...</div>
 				) : (
 					<section>
 						{/* Segment Control */}
 						<div className="mb-6">
-							<div className="flex items-center gap-1 rounded-lg border border-[#262626] bg-[#0a0a0a] p-1">
+							<div className="flex items-center gap-1 rounded-lg border border-border-default bg-bg-primary p-1">
 								<button
 									onClick={() => setCurrentView('active')}
-									className={`rounded-md px-4 py-2 text-[13px] font-medium tracking-wide transition-colors duration-150 ${
+									className={`rounded-md px-4 py-2 text-[length:var(--font-size-sm)] font-medium tracking-wide transition-colors duration-150 ${
 										currentView === 'active'
-											? 'bg-[#151515] text-white'
-											: 'bg-transparent text-[#737373] hover:bg-[#111111] hover:text-[#a3a3a3]'
+											? 'bg-bg-secondary text-white'
+											: 'bg-transparent text-text-tertiary hover:bg-bg-hover-subtle hover:text-text-secondary'
 									}`}
 								>
 									Active {activeTasks.length > 0 && `(${activeTasks.length})`}
 								</button>
 								<button
 									onClick={() => setCurrentView('completed')}
-									className={`rounded-md px-4 py-2 text-[13px] font-medium tracking-wide transition-colors duration-150 ${
+									className={`rounded-md px-4 py-2 text-[length:var(--font-size-sm)] font-medium tracking-wide transition-colors duration-150 ${
 										currentView === 'completed'
-											? 'bg-[#151515] text-white'
-											: 'bg-transparent text-[#737373] hover:bg-[#111111] hover:text-[#a3a3a3]'
+											? 'bg-bg-secondary text-white'
+											: 'bg-transparent text-text-tertiary hover:bg-bg-hover-subtle hover:text-text-secondary'
 									}`}
 								>
 									Completed {completedTasks.length > 0 && `(${completedTasks.length})`}
@@ -282,8 +282,8 @@ export default function Home() {
 								{displayedTasks.map((task) => (
 								<div
 									key={task.id}
-									className={`group rounded-lg border bg-[#151515] p-4 transition-colors hover:bg-[#1f1f1f] ${
-										task.isOverdue ? 'border-[#dc2626]/30' : 'border-[#262626]'
+									className={`group rounded-lg border bg-bg-secondary p-4 transition-colors hover:bg-bg-hover ${
+										task.isOverdue ? 'border-status-warning/30' : 'border-border-default'
 									}`}
 								>
 									<div className="flex items-start gap-3">
@@ -291,8 +291,8 @@ export default function Home() {
 											onClick={() => toggleTask(task.id)}
 											className={`mt-0.5 h-5 w-5 flex-shrink-0 rounded border-2 transition-colors ${
 												task.completed
-													? 'border-[#16a34a] bg-[#16a34a]'
-													: 'border-[#404040] hover:border-[#525252]'
+													? 'border-status-completed bg-status-completed'
+													: 'border-border-hover hover:border-border-focus'
 											}`}
 											aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
 										>
@@ -316,16 +316,16 @@ export default function Home() {
 										<div className="min-w-0 flex-1">
 											<div className="flex items-start justify-between gap-3">
 												<h3
-													className={`text-[15px] leading-relaxed ${
-														task.completed ? 'text-[#737373] line-through' : 'text-[#fafafa]'
+													className={`text-[length:var(--font-size-base)] leading-relaxed ${
+														task.completed ? 'text-text-tertiary line-through' : 'text-text-primary'
 													}`}
 												>
 													{task.title}
 												</h3>
 												{task.due_date && (
 													<span
-														className={`flex-shrink-0 text-[13px] ${
-															task.isOverdue ? 'font-medium text-[#dc2626]' : 'text-[#a1a1a1]'
+														className={`flex-shrink-0 text-[length:var(--font-size-sm)] ${
+															task.isOverdue ? 'font-medium text-status-warning' : 'text-text-secondary'
 														}`}
 													>
 														{formatDate(task.due_date)}
@@ -334,14 +334,14 @@ export default function Home() {
 											</div>
 
 											{task.description && (
-												<p className="mt-1 text-[13px] leading-relaxed text-[#a1a1a1]">
+												<p className="mt-1 text-[length:var(--font-size-sm)] leading-relaxed text-text-secondary">
 													{task.description}
 												</p>
 											)}
 
 											<div className="mt-2">
 												<span
-													className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${getSourceColor(
+													className={`inline-flex items-center rounded border px-2 py-0.5 text-[length:var(--font-size-xs)] font-medium uppercase tracking-wide ${getSourceColor(
 														task.source
 													)}`}
 												>
@@ -356,18 +356,18 @@ export default function Home() {
 						) : (
 							/* Empty State */
 							<div className="flex flex-col items-center justify-center px-4 py-16">
-								<div className="space-y-2 text-center text-sm text-[#404040]">
+								<div className="space-y-2 text-center text-sm text-text-tertiary">
 									{currentView === 'active' ? (
 										<>
 											<p className="font-medium">No active commitments</p>
-											<p className="text-xs text-[#2e2e2e]">
+											<p className="text-xs text-text-muted">
 												Tasks appear here when created or restored
 											</p>
 										</>
 									) : (
 										<>
 											<p className="font-medium">No completed tasks yet</p>
-											<p className="text-xs text-[#2e2e2e]">Completed tasks will appear here</p>
+											<p className="text-xs text-text-muted">Completed tasks will appear here</p>
 										</>
 									)}
 								</div>
